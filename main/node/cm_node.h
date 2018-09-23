@@ -10,29 +10,29 @@
 
 typedef struct cm_node_subdomain_info_tt
 {
-	uint32 subdomain;
-	uint32 size;
+    uint32 subdomain;
+    uint32 size;
 } cm_node_subdomain_info_t;
 
 typedef struct
 {
-	uint32 nid;
-	uint32 subdomain;
-	sint8 ipaddr[CM_IP_LEN];
+    uint32 nid;
+    uint32 subdomain;
+    sint8 ipaddr[CM_IP_LEN];
 } cm_node_info_t;
 
 typedef struct cm_node_tree_tt
 {
-	struct cm_node_tree_tt *pSib;
-	struct cm_node_tree_tt *pChild;
-	uint32 datalen;
-	uint8 data[];
+    struct cm_node_tree_tt *pSib;
+    struct cm_node_tree_tt *pChild;
+    uint32 datalen;
+    uint8 data[];
 } cm_node_tree_t;
 
 
 extern sint32 cm_node_init();
 extern sint32 cm_node_new_node();
 extern uint32 cm_node_get_local_nid();
-extern sint32 cm_node_add(uint32 nid, );
+extern sint32 cm_node_add(uint32 nid,);
 
 #endif

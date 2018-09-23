@@ -5,9 +5,9 @@
 
 extern sint32 cm_rpc_client_init();
 
-extern sint32 cm_rpc_client_request
-	(uint32 type, const sint8 *ipaddr,
-	void *pData, uint32 len,
-	void **ppAck, uint32 *pAckLen);
+extern sint32 cm_rpc_client_request(
+    uint32 type, const sint8 *ipaddr,
+    void *pData, uint32 len,
+    void **ppAck, uint32 *pAckLen);
 
 #endif

@@ -3,17 +3,17 @@
 
 static const cm_main_init_func_t init_cbks[] =
 {
-	cm_log_init,
-	cm_rpc_init,
-	NULL,
+    cm_log_init,
+    cm_rpc_init,
+    NULL,
 };
 
 static sint32 cm_main_iter_init_cbks()
 {
     sint32 iRet;
     uint32 cnt = 0;
-	cm_main_init_func_t *cbk = init_cbks;
-	while(NULL != cbk)
+    cm_main_init_func_t *cbk = init_cbks;
+    while(NULL != cbk)
     {
         iRet = cbk();
         if(CM_OK != iRet)

@@ -33,7 +33,7 @@ typedef int64_t sint64;
 typedef uint64_t uint64;
 /********end typedef for number********/
 
-typedef sint32 (*cm_main_init_func_t)();
+typedef sint32(*cm_main_init_func_t)();
 
 typedef pthread_mutex_t cm_mutex_t;
 typedef pthread_t cm_thread_t;

@@ -30,10 +30,10 @@ extern uint64 cm_get_time_now(uint64 * time);
 extern sint32 cm_get_timestamp(sint8 * str_time, uint32 len);
 
 extern sint32 cm_exec_for_str_tmout
-	(sint8 *buf, uint32 size, const sint8 *cmd, uint32 tmout);
+(sint8 *buf, uint32 size, const sint8 *cmd, uint32 tmout);
 
 extern sint32 cm_exec_tmout
-	(sint8 *buf, uint32 size, uint32 tmout, const sint8 *format, ...);
+(sint8 *buf, uint32 size, uint32 tmout, const sint8 *format, ...);
 
 
 #endif /* INCLUDE_CM_COMMON_H */

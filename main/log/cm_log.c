@@ -11,11 +11,11 @@ sint32 cm_log_init()
 {
     sint32 iRet;
     iRet = faccessat(0, CM_LOG_DIR, F_OK, AT_EACCESS);
-    if(CM_OK != iRet) 
-	{
+    if(CM_OK != iRet)
+    {
         iRet = CM_SYSTEM("mkdir -p "CM_LOG_DIR);
         if(CM_OK != iRet)
-		{
+        {
             return CM_FAIL;
         }
     }
@@ -35,7 +35,7 @@ sint32 cm_log_print
     va_list ap;
 
     if((type >= CM_LOG_TYPE_BUTT) ||
-       (mod >= CM_LOG_MOD_BUTT))
+            (mod >= CM_LOG_MOD_BUTT))
     {
         return CM_FAIL;
     }
@@ -43,7 +43,7 @@ sint32 cm_log_print
     //get time stamp string
     iRet = cm_get_timestamp(str_log, CM_LOG_LEN_MSG);
     if(CM_OK != iRet)
-	{
+    {
         return CM_FAIL;
     }
 
@@ -67,14 +67,14 @@ sint32 cm_log_print
     fd = open(g_cm_log_name_path_map[mod].path,
               CM_LOG_FILE_MODE, CM_LOG_FILE_ACCESS);
     if(-1 == fd)
-	{
+    {
         return CM_FAIL;
     }
 
     len_str = strlen(str_log);
     iRet = write(fd, str_log, len_str);
     if((iRet < 0) || (len_str > iRet))
-	{
+    {
         close(fd);
         return CM_FAIL;
     }

@@ -8,29 +8,29 @@
 
 typedef struct
 {
-	sint8 *name;
-	sint8 *path;
+    sint8 *name;
+    sint8 *path;
 } cm_log_name_path_map_t;
 
 typedef enum
 {
-	CM_LOG_MOD_RPC = 0,
-	CM_LOG_MOD_COMM,
-	CM_LOG_MOD_BUTT
+    CM_LOG_MOD_RPC = 0,
+    CM_LOG_MOD_COMM,
+    CM_LOG_MOD_BUTT
 } cm_log_mod_e;
 
 typedef enum
 {
-	CM_LOG_TYPE_ERR = 0,
-	CM_LOG_TYPE_WARN,
-	CM_LOG_TYPE_DEBUG,
-	CM_LOG_TYPE_BUTT
+    CM_LOG_TYPE_ERR = 0,
+    CM_LOG_TYPE_WARN,
+    CM_LOG_TYPE_DEBUG,
+    CM_LOG_TYPE_BUTT
 } cm_log_type_e;
 
 extern sint32 cm_log_init();
 
 extern sint32 cm_log_print(uint32 type, uint32 mod, uint32 line,
-	const sint8 *func, const sint8 *format, ...);
+                           const sint8 *func, const sint8 *format, ...);
 
 #define CM_LOG_ERR(MOD, FORMAT, ...) 	\
 	cm_log_print(CM_LOG_TYPE_ERR, (MOD), __LINE__, __func__, (FORMAT), ## __VA_ARGS__)

@@ -9,11 +9,11 @@ typedef struct cm_queue_ele_tt cm_queue_ele_t;
 
 typedef struct
 {
-	uint32 capacity;
-	uint32 size;
-	uint32 rd_index;
-	uint32 wr_index;
-	cm_queue_ele_t elements[CM_QUEUE_CAPACITY];
+    uint32 capacity;
+    uint32 size;
+    uint32 rd_index;
+    uint32 wr_index;
+    cm_queue_ele_t elements[CM_QUEUE_CAPACITY];
 } cm_queue_t;
 
 extern sint32 cm_queue_init(cm_queue_t **ppQueue);
