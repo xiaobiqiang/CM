@@ -1,5 +1,6 @@
 #include "cm_rpc_client.h"
 #include "cm_rpc_common.h"
+#include "cm_log.h"
 
 sint32 cm_rpc_client_init()
 {

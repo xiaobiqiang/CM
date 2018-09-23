@@ -1,6 +1,7 @@
 #include "cm_rpc_server.h"
 #include "cm_rpc_common.h"
 #include <sys/socket.h>
+#include "cm_log.h"
 
 #define CM_RPC_SERVER_NUM_THREAD 2
 #define CM_RPC_SERVER_NUM_REQ	64
@@ -18,7 +19,7 @@ static sint32 g_cm_rpc_server_fd = -1;
 static cm_mutex_t g_cm_rpc_server_mutex;
 static cm_rpc_server_cfg_t g_cm_rpc_server_cfg[CM_RPC_MSG_TYPE_BUTT];
 
-static sint32 cm_rpc_send_fail_rpc_msg(uint32 fd, uint32 type);
+static sint32 cm_rpc_send_fail_rpc_msg(uint32 fd, uint32 type, void *pdata, uint32 len);
 
 static void * cm_rpc_server_cbk_accept_thread(void *pArg)
 {
@@ -42,7 +43,7 @@ static void * cm_rpc_server_cbk_accept_thread(void *pArg)
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "receive data fail[%d]", iRet);
-            cm_rpc_send_fail_rpc_msg(cli_fd, 0);
+            cm_rpc_send_fail_rpc_msg(cli_fd, 0, NULL, 0);
             continue;
         }
 
@@ -51,7 +52,7 @@ static void * cm_rpc_server_cbk_accept_thread(void *pArg)
         if(NULL == pCfg->wait_responce)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "type of %u not register yet", pMsg->msg_type);
-            (void)cm_rpc_send_fail_rpc_msg(cli_fd, pMsg->msg_type);
+            (void)cm_rpc_send_fail_rpc_msg(cli_fd, pMsg->msg_type, NULL, 0);
             CM_FREE(pMsg);
             continue;
         }
@@ -64,7 +65,7 @@ static void * cm_rpc_server_cbk_accept_thread(void *pArg)
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "queue add fail[%d]", iRet);
-            cm_rpc_send_fail_rpc_msg(cli_fd, pMsg->msg_type);
+            cm_rpc_send_fail_rpc_msg(cli_fd, pMsg->msg_type, NULL, 0);
             CM_FREE(pMsg);
         }
     }
@@ -164,24 +165,27 @@ sint32 cm_rpc_server_init()
 }
 
 //将cm_rpc_msg_info_t的result置为CM_FAIL，之后无论发送成功失败都会关闭fd.
-static sint32 cm_rpc_send_fail_rpc_msg(uint32 fd, uint32 type)
+static sint32 cm_rpc_send_fail_rpc_msg(uint32 fd, uint32 type, void *pdata, uint32 len)
 {
     sint32 iRet;
-    cm_rpc_msg_info_t snd =
+    cm_rpc_msg_info_t *pSnd = NULL;
+
+    iRet = cm_rpc_new_rpc_msg(fd, type, len, pdata, &pSnd);
+    if(CM_OK != iRet)
     {
-        .tcp_fd = fd,
-        .msg_type = type,
-        .headlen = sizeof(cm_rpc_msg_info_t),
-        .datalen = 0,
-        .result = CM_FAIL
-    };
-    iRet = cm_rpc_send_retry(fd, &snd, snd.headlen, CM_RPC_RETRY_TMOUT);
+        CM_LOG_ERR(CM_LOG_MOD_RPC, "create new rpc msg fail");
+        return CM_FAIL;
+    }
+    pSnd->result = CM_FAIL;
+    iRet = cm_rpc_send_retry(fd, pSnd, pSnd->headlen+len, CM_RPC_RETRY_TMOUT);
     if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "send fail msg fail");
+        CM_FREE(pSnd);
         close(fd);
         return CM_FAIL;
     }
+    CM_FREE(pSnd);
     close(fd);
     return CM_OK;
 }
@@ -212,7 +216,11 @@ static void * cm_rpc_server_cbk_reg_thread(void *arg)
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "process fail[%d]", iRet);
-            (void)cm_rpc_send_fail_rpc_msg(pMsg->tcp_fd, pMsg->msg_type);
+            (void)cm_rpc_send_fail_rpc_msg(pMsg->tcp_fd, pMsg->msg_type, pAckData, ackLen);
+            if(NULL != pAckData)
+            {
+                CM_FREE(pAckData);
+            }
             CM_FREE(pMsg);
             continue;
         }

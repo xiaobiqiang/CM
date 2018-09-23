@@ -1,4 +1,5 @@
 #include "cm_common.h"
+#include "cm_log.h"
 #include <sys/wait.h>
 
 uint64 cm_get_time_now(uint64 *time)

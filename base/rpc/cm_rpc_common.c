@@ -1,5 +1,6 @@
 #include "cm_rpc_common.h"
 #include "cm_sys.h"
+#include "cm_log.h"
 
 sint32 cm_rpc_server_bind_retry
 (sint32 fd, const struct sockaddr *addr, uint32 len, uint32 tmout)
@@ -43,6 +44,7 @@ sint32 cm_rpc_send_retry(uint32 fd, void *data, uint32 len, uint32 tmout)
     return CM_FAIL;
 }
 
+//result默认为CM_OK
 sint32 cm_rpc_new_rpc_msg
 (uint32 fd, uint32 type, uint32 len, void *data, cm_rpc_msg_info_t **ppAck)
 {
@@ -57,6 +59,7 @@ sint32 cm_rpc_new_rpc_msg
     pinfo->msg_type = type;
     pinfo->headlen = sizeof(cm_rpc_msg_info_t);
     pinfo->datalen = len;
+    pinfo->result = CM_OK;
     CM_MEM_CPY(pinfo->data, data, len);
     return CM_OK;
 }
