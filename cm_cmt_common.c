@@ -1,5 +1,9 @@
 #include "cm_cmt_common.h"
 #include "cm_node.h"
+#include "cm_log.h"
+#include "cm_rpc_common.h"
+
+extern const cm_cmt_msg_cfg_t g_cm_cmt_msg_cfgs[CM_CMT_MSG_TYPE_BUTT];
 
 static sint32 cm_cmt_request_comm
 (const sint8 *ipaddr, cm_cmt_msg_info_t *pinfo, void **ppAck, uint32 *pAckLen);
@@ -46,7 +50,7 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
                       void **ppAck, uint32 *pAckLen)
 {
     sint32 iRet;
-    cm_cmt_msg_cfg_t *pCfg = NULL;
+    const cm_cmt_msg_cfg_t *pCfg = NULL;
     cm_cmt_msg_info_t *pinfo = NULL;
     uint32 myid = cm_node_get_local_nid();
     //nid的子域ID
@@ -61,7 +65,7 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
     //目的节点就是本节点，直接处理cbk
     if(nid == myid)
     {
-        pCfg = g_cm_cmt_msg_cfgs[type];
+        pCfg = &g_cm_cmt_msg_cfgs[type];
         iRet = pCfg->cbk(pData, len, ppAck, pAckLen);
         if(CM_OK != iRet)
         {
@@ -89,9 +93,9 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
     //如果自身是子域主，那么转发到另外一个子域主
     if(myid == cm_node_get_subdomain_master())
     {
-        ano_subdomain = cm_node_get_submaster_by_nid(nid)
-                        return cm_cmt_request_ano_submaster
-                               (ano_subdomain, pinfo, ppAck, pAckLen);
+        ano_subdomain = cm_node_get_submaster_by_nid(nid);
+        return cm_cmt_request_ano_submaster
+               (ano_subdomain, pinfo, ppAck, pAckLen);
     }
 
     //如果自身节点还不是子域主，那么就发送给子域主
@@ -112,7 +116,7 @@ static sint32 cm_cmt_request_comm
                           &pRpcAck, &rpcAcklen);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "rpc request %u fail[%d]", nid, iRet);
+        CM_LOG_ERR(CM_LOG_MOD_CMT, "rpc request %s fail[%d]", ipaddr, iRet);
         return CM_FAIL;
     }
 
@@ -139,7 +143,7 @@ static sint32 cm_cmt_request_nid
     cm_node_info_t nodeinfo;
 
     iRet = cm_node_getinfo_by_nid(nid, &nodeinfo);
-    if(CM_OK != = iRet)
+    if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_CMT, "subdomainId:%u, ano_subdomainId:%u",
                    cm_node_get_subdomain_id(), cm_node_get_subdomain_by_nid(nid));

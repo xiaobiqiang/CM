@@ -58,7 +58,7 @@ sint32 cm_rpc_client_request(
     sint32 tcp_fd;
     uint32 recv_len = 0;
     cm_rpc_msg_info_t *pRecv = NULL;
-
+	CM_LOG_DEBUG(CM_LOG_MOD_RPC, "type: %u, ipaddr: %s", type, ipaddr);
     tcp_fd = cm_rpc_client_connect_retry(AF_INET, SOCK_STREAM,
                                          ipaddr, CM_RPC_SERVER_PORT, CM_RPC_RETRY_TMOUT);
     if(CM_FAIL == tcp_fd)
@@ -66,7 +66,7 @@ sint32 cm_rpc_client_request(
         CM_LOG_ERR(CM_LOG_MOD_RPC, "connect %s tmout", ipaddr);
         return CM_FAIL;
     }
-
+	
     iRet = cm_rpc_client_send_retry(tcp_fd, type, pData, len, CM_RPC_RETRY_TMOUT);
     if(CM_OK != iRet)
     {
@@ -75,6 +75,7 @@ sint32 cm_rpc_client_request(
     }
 
     iRet = cm_rpc_recv_try(tcp_fd, &pRecv, &recv_len);
+    close(tcp_fd);
     if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "recv data fail[%d]", iRet);

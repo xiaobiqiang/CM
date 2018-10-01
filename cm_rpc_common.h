@@ -12,7 +12,8 @@ typedef sint32(*cm_rpc_server_cbk_func_t)
 
 typedef enum
 {
-    CM_RPC_MSG_TYPE_CMT = 0,
+	CM_RPC_MSG_TYPE_TEST = 0,
+    CM_RPC_MSG_TYPE_CMT = 1,
     CM_RPC_MSG_TYPE_BUTT
 } cm_rpc_msg_type_e;
 

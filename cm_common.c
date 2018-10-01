@@ -60,7 +60,6 @@ sint32 cm_exec_for_str_tmout
     else if(pid > 0)
     {
         close(fds[1]);
-        alarm(tmout);
         if((NULL != buf) && (size > 0))
         {
             (void)read(fds[0], buf, size);
@@ -77,6 +76,7 @@ sint32 cm_exec_for_str_tmout
     }
     close(fds[0]);
     (void)dup2(fds[1], STDOUT_FILENO);
+    alarm(tmout);
     iRet = execl("/bin/sh", "sh", "-c", cmd, (char *)0);
     if(iRet == CM_FAIL)
     {

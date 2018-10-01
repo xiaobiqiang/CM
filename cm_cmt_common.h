@@ -2,6 +2,7 @@
 #define BASE_CM_CMT_COMMON_H
 
 #include "cm_defines.h"
+#include "cm_rpc_common.h"
 
 #define CM_CMT_FREE_RPC_MSG(pCmt) \
     (CM_FREE((pCmt)-sizeof(cm_rpc_msg_info_t)))

@@ -25,9 +25,10 @@ sint32 cm_rpc_server_bind_retry
 sint32 cm_rpc_send_retry(uint32 fd, void *data, uint32 len, uint32 tmout)
 {
     sint32 iRet;
-    for(int numsec = 1; numsec <= tmout; numsec << 1)
+    for(int numsec = 1; numsec <= 1; numsec << 1)
     {
         iRet = send(fd, data, len, 0);
+        printf("snd_iRet:%d\n", iRet);
         if(len == iRet)
         {
             return CM_OK;
@@ -61,6 +62,7 @@ sint32 cm_rpc_new_rpc_msg
     pinfo->datalen = len;
     pinfo->result = CM_OK;
     CM_MEM_CPY(pinfo->data, data, len);
+    *ppAck = pinfo;
     return CM_OK;
 }
 
@@ -78,9 +80,8 @@ sint32 cm_rpc_client_send_retry
         CM_LOG_ERR(CM_LOG_MOD_RPC, "create new rpc msg fail[%d]", iRet);
         return CM_FAIL;
     }
-
-    iRet = cm_rpc_send_retry(fd, pSnd, pSnd->headlen + pSnd->datalen, tmout)
-           if(CM_OK != iRet)
+    iRet = cm_rpc_send_retry(fd, pSnd, pSnd->headlen + pSnd->datalen, tmout);
+    if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "send less data");
         CM_FREE(pSnd);
@@ -106,8 +107,8 @@ sint32 cm_rpc_recv_try(sint32 fd, void **ppAck, uint32 *pAckLen)
         *pAckLen = 0;
         return CM_FAIL;
     }
-
-    recv_len = recv(fd, pRecv, CM_RPC_SERVER_MAX_LEN_MSG, MSG_WAITALL);
+    recv_len = recv(fd, pRecv, CM_RPC_SERVER_MAX_LEN_MSG, 0);
+    CM_LOG_DEBUG(CM_LOG_MOD_RPC, "recv_len:%d\n", recv_len);
     if(recv_len <= sizeof(cm_rpc_msg_info_t))	//no data.
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "recv len:%d", recv_len);

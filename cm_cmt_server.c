@@ -8,6 +8,9 @@
  *子域主与其他子域内不是子域主的节点通信需要经过子域主节点转发。(一次转发)
  *子域内不是子域主的节点于另一个子域内不是子域主的节点通信需要经过两个子域主的转发。(二次转发)
  *******************************************************************************************************/
+
+extern const cm_cmt_msg_cfg_t g_cm_cmt_msg_cfgs[CM_CMT_MSG_TYPE_BUTT];
+ 
 sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
                           void **ppAck, uint32 *pAckLen)
 {
@@ -27,14 +30,14 @@ sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
     //发送至的节点就是自身节点，那么直接处理
     if(pinfo->to == myid)
     {
-        pCfg = g_cm_cmt_msg_cfgs[pinfo->type];
+        pCfg = &g_cm_cmt_msg_cfgs[pinfo->type];
         iRet = pCfg->cbk(pinfo->data, pinfo->datalen, ppAck, pAckLen);
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_CMT, "cbk exec fail[%d]", iRet);
             *ppAck = NULL;
             *pAckLen = 0;
-            rerturn CM_FAIL;
+            return CM_FAIL;
         }
         return CM_OK;
     }

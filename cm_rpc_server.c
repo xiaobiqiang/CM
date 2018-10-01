@@ -2,6 +2,7 @@
 #include "cm_rpc_common.h"
 #include <sys/socket.h>
 #include "cm_log.h"
+#include "cm_queue.h"
 
 #define CM_RPC_SERVER_NUM_THREAD 2
 #define CM_RPC_SERVER_NUM_REQ	64
@@ -24,7 +25,7 @@ static sint32 cm_rpc_send_fail_rpc_msg(uint32 fd, uint32 type, void *pdata, uint
 static void * cm_rpc_server_cbk_accept_thread(void *pArg)
 {
     sint32 iRet;
-    sint32 ser_fd = (sint32 *)pArg;
+    sint32 ser_fd = *(sint32 *)pArg;
     sint32 cli_fd = -1;
     uint32 recv_len = 0;
     cm_rpc_msg_info_t *pMsg = NULL;
@@ -38,15 +39,14 @@ static void * cm_rpc_server_cbk_accept_thread(void *pArg)
             CM_LOG_ERR(CM_LOG_MOD_RPC, "accept fail[%d]", cli_fd);
             continue;
         }
-
         iRet = cm_rpc_recv_try(cli_fd, &pMsg, &recv_len);
+        CM_LOG_DEBUG(CM_LOG_MOD_RPC, "recv_len: %d", recv_len);
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "receive data fail[%d]", iRet);
             cm_rpc_send_fail_rpc_msg(cli_fd, 0, NULL, 0);
             continue;
         }
-
         //在上层cmt等初始化就会注册处理函数，一般很难为NULL，所以不加全局锁来判断了。
         pCfg = &g_cm_rpc_server_cfg[pMsg->msg_type];
         if(NULL == pCfg->wait_responce)
@@ -61,7 +61,6 @@ static void * cm_rpc_server_cbk_accept_thread(void *pArg)
         CM_MUTEX_LOCK(&pCfg->lock);
         iRet = cm_queue_add(pCfg->wait_responce, pMsg, recv_len);
         CM_MUTEX_UNLOCK(&pCfg->lock);
-
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "queue add fail[%d]", iRet);
@@ -78,9 +77,10 @@ static sint32 cm_rpc_server_bind(sint32 fd, uint32 tmout)
     sint32 iRet;
     sint8 ipaddr[CM_IP_LEN] = {0};
     uint32 bin_addr = 0;
+    uint32 reuseaddr = 1;
     struct sockaddr_in addr_in;
 
-    iRet = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, 1);
+    iRet = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(uint32));
     if(iRet != CM_OK)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "set reuse addr fail");
@@ -88,15 +88,14 @@ static sint32 cm_rpc_server_bind(sint32 fd, uint32 tmout)
     }
 
     iRet = cm_exec_for_str_tmout(ipaddr, CM_IP_LEN,
-                                 "cat /etc/sysconfig/network-scripts/ifcfg-ens33 | "
-                                 "grep -w IPADDR | cut -d '=' -f 2",
+                                 "ifconfig ens33 | grep -w inet | awk '{printf $2}'",
                                  2);
     if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "get rpc server ip fail[%d]", iRet);
     }
 
-    addr_in.sa_family_t = AF_INET;
+    addr_in.sin_family = AF_INET;
     addr_in.sin_port = CM_RPC_SERVER_PORT;
 
     (void)inet_pton(AF_INET, ipaddr, &bin_addr);
@@ -122,7 +121,7 @@ sint32 cm_rpc_server_init()
         return CM_FAIL;
     }
 
-    iRet = cm_rpc_server_bind(g_cm_rpc_server_fd);
+    iRet = cm_rpc_server_bind(g_cm_rpc_server_fd, CM_RPC_RETRY_TMOUT);
     if(iRet != CM_OK)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC,
@@ -141,7 +140,6 @@ sint32 cm_rpc_server_init()
     CM_MUTEX_INIT(&g_cm_rpc_server_mutex);
     CM_MEM_ZERO(g_cm_rpc_server_cfg,
                 sizeof(cm_rpc_server_cfg_t) * CM_RPC_MSG_TYPE_BUTT);
-
     //所有线程创建失败直接返回CM_FAIL。
     for(sint32 i = 0; i < CM_RPC_SERVER_NUM_THREAD; i++)
     {
@@ -213,6 +211,7 @@ static void * cm_rpc_server_cbk_reg_thread(void *arg)
         }
 
         iRet = pCfg->cbk(pMsg->data, pMsg->datalen, &pAckData, &ackLen);
+        CM_LOG_DEBUG(CM_LOG_MOD_RPC, "acklen :%d", ackLen);
         if(CM_OK != iRet)
         {
             CM_LOG_ERR(CM_LOG_MOD_RPC, "process fail[%d]", iRet);
@@ -224,7 +223,6 @@ static void * cm_rpc_server_cbk_reg_thread(void *arg)
             CM_FREE(pMsg);
             continue;
         }
-
         iRet = cm_rpc_client_send_retry(pMsg->tcp_fd, pMsg->msg_type,
                                         pAckData, ackLen, CM_RPC_RETRY_TMOUT);
         if(CM_OK != iRet)
@@ -243,13 +241,11 @@ static sint32 cm_rpc_server_init_cfg
 (uint32 type, cm_rpc_server_cbk_func_t cbk, cm_rpc_server_cfg_t *pCfg)
 {
     sint32 iRet;
-
     //一台主机只有一个方法初始化，因此不用考虑加锁
     if(NULL != pCfg->cbk)
     {
         //registered.
         CM_LOG_ERR(CM_LOG_MOD_RPC, "this type has already registered.");
-        CM_FREE(pQueue);
         return CM_FAIL;
     }
 
@@ -286,6 +282,10 @@ sint32 cm_rpc_server_reg(uint32 type, cm_rpc_server_cbk_func_t cbk)
     if(iRet != CM_OK)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "init cfg fail");
+        if(NULL != pCfg->wait_responce)
+        {
+			CM_FREE(pCfg->wait_responce);
+        }
         return CM_FAIL;
     }
 

@@ -2,16 +2,21 @@
 #include "cm_rpc_server.h"
 #include "cm_log.h"
 
+#define CM_RPC_SERVER_ON 
+//#undef CM_RPC_SERVER_ON
+
+
 sint32 cm_rpc_init()
 {
     sint32 iRet;
-
+#ifdef CM_RPC_SERVER_ON
     iRet = cm_rpc_server_init();
     if(CM_OK != iRet)
     {
         CM_LOG_ERR(CM_LOG_MOD_RPC, "rpc server init fail[%d]", iRet);
         return CM_FAIL;
     }
+#endif
 
     iRet = cm_rpc_client_init();
     if(CM_OK != iRet)

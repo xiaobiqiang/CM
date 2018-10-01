@@ -5,7 +5,11 @@
 
 #define CM_QUEUE_CAPACITY	16
 
-typedef struct cm_queue_ele_tt cm_queue_ele_t;
+typedef struct
+{
+    void *pData;
+    uint32 len;
+} cm_queue_ele_t;
 
 typedef struct
 {

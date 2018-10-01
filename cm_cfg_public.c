@@ -1,5 +1,6 @@
 #include "cm_log.h"
 #include "cm_cmt.h"
+#include "cm_cmt_common.h"
 
 const sint8 *g_cm_log_type_name_map[CM_LOG_TYPE_BUTT] =
 {

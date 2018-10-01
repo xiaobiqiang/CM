@@ -4,7 +4,7 @@
 #define CM_LOG_FILE_MODE 	O_WRONLY|O_CREAT|O_APPEND
 #define CM_LOG_FILE_ACCESS 	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH
 
-extern const sint8 *g_cm_log_name_path_map[CM_LOG_MOD_BUTT];
+extern const cm_log_name_path_map_t g_cm_log_name_path_map[CM_LOG_MOD_BUTT];
 extern const sint8 *g_cm_log_type_name_map[CM_LOG_TYPE_BUTT];
 
 sint32 cm_log_init()
@@ -18,6 +18,23 @@ sint32 cm_log_init()
         {
             return CM_FAIL;
         }
+        iRet = CM_SYSTEM("touch "CM_LOG_DIR"xbq_cm.log");
+        if(CM_OK != iRet)
+        {
+            return CM_FAIL;
+        }
+    }
+    else
+    {
+	    iRet = faccessat(0, CM_LOG_DIR"xbq_cm.log", F_OK, AT_EACCESS);
+	    if(CM_OK != iRet)
+	    {
+	        iRet = CM_SYSTEM("touch "CM_LOG_DIR"xbq_cm.log");
+	        if(CM_OK != iRet)
+	        {
+	            return CM_FAIL;
+	        }
+   		}
     }
     return CM_OK;
 }

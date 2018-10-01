@@ -1,11 +1,5 @@
 #include "cm_queue.h"
 
-struct cm_queue_ele_tt
-{
-    void *pData;
-    uint32 len;
-};
-
 sint32 cm_queue_init(cm_queue_t **ppQueue)
 {
     cm_queue_t *pQueue = NULL;
