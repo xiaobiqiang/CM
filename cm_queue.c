@@ -20,7 +20,7 @@ sint32 cm_queue_init(cm_queue_t **ppQueue)
     pQueue->rd_index = 0;
     CM_MEM_ZERO(pQueue->elements,
                 sizeof(cm_queue_ele_t) * pQueue->capacity);
-
+	CM_MUTEX_INIT(&pQueue->lock);
     *ppQueue = pQueue;
     return CM_OK;
 }
@@ -28,8 +28,10 @@ sint32 cm_queue_init(cm_queue_t **ppQueue)
 sint32 cm_queue_add(cm_queue_t *pQueue, void *pData, uint32 len)
 {
     cm_queue_ele_t *pVal = NULL;
-    if(NULL == pQueue || pQueue->size == pQueue->capacity)
+	CM_MUTEX_LOCK(&pQueue->lock);
+    if(pQueue->size == pQueue->capacity)
     {
+		CM_MUTEX_UNLOCK(&pQueue->lock);
         return CM_FAIL;
     }
 
@@ -42,16 +44,17 @@ sint32 cm_queue_add(cm_queue_t *pQueue, void *pData, uint32 len)
         pQueue->wr_index = 0;
     }
     pQueue->size++;
+	CM_MUTEX_UNLOCK(&pQueue->lock);
     return CM_OK;
 }
 
 sint32 cm_queue_get(cm_queue_t *pQueue, void **ppAckData, uint32 *pAckLen)
 {
     cm_queue_ele_t *pVal = NULL;
-    if(NULL == pQueue || pQueue->size == 0)
+	CM_MUTEX_LOCK(&pQueue->lock);
+    if(pQueue->size == 0)
     {
-        *ppAckData = NULL;
-        *pAckLen = 0;
+		CM_MUTEX_UNLOCK(&pQueue->lock);
         return CM_FAIL;
     }
 
@@ -66,5 +69,6 @@ sint32 cm_queue_get(cm_queue_t *pQueue, void **ppAckData, uint32 *pAckLen)
     //如果把ppAckData和pAckLen的赋值写在size--后面，就有可能返回的结果是刚刚add进来的数据。
     //试想一下，size=capacity时，size--之后把CPU执行权交给add函数，add函数执行完就有可能pVal指向的值。
     //这样ack拿到的就是刚刚插进来的值。没满的时候不会发生这种情况，因为操作的地址不同。
+	CM_MUTEX_UNLOCK(&pQueue->lock);
     return CM_OK;
 }

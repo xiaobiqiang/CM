@@ -14,10 +14,10 @@ typedef struct
 
 typedef enum
 {
-    CM_LOG_MOD_RPC = 0,
-    CM_LOG_MOD_COMM,
-    CM_LOG_MOD_CMT,
-    CM_LOG_MOD_BUTT
+    CM_MOD_RPC = 0,
+    CM_MOD_COMM,
+    CM_MOD_CMT,
+    CM_MOD_BUTT
 } cm_log_mod_e;
 
 typedef enum

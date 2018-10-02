@@ -21,7 +21,7 @@ sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
 
     if((NULL == pData) || (len <= sizeof(cm_cmt_msg_info_t)))
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "data_len:%u", len);
+        CM_LOG_ERR(CM_MOD_CMT, "data_len:%u", len);
         *ppAck = NULL;
         *pAckLen = 0;
         return CM_FAIL;
@@ -34,7 +34,7 @@ sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
         iRet = pCfg->cbk(pinfo->data, pinfo->datalen, ppAck, pAckLen);
         if(CM_OK != iRet)
         {
-            CM_LOG_ERR(CM_LOG_MOD_CMT, "cbk exec fail[%d]", iRet);
+            CM_LOG_ERR(CM_MOD_CMT, "cbk exec fail[%d]", iRet);
             *ppAck = NULL;
             *pAckLen = 0;
             return CM_FAIL;
@@ -50,7 +50,7 @@ sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
     }
 
     //不是子域主，也不是目的节点，只能返回失败,很难出现
-    CM_LOG_ERR(CM_LOG_MOD_CMT, "local id:%u, submaster:%u",
+    CM_LOG_ERR(CM_MOD_CMT, "local id:%u, submaster:%u",
                myid, cm_node_get_subdomain_master());
     *ppAck = NULL;
     *pAckLen = 0;
@@ -61,10 +61,10 @@ sint32 cm_cmt_cbk_rpc_reg(void *pData, uint32 len,
 sint32 cm_cmt_server_init()
 {
     sint32 iRet;
-    iRet = cm_rpc_register(CM_RPC_MSG_TYPE_CMT, cm_cmt_cbk_rpc_reg);
+    iRet = cm_rpc_register(CM_RPC_MSG_CMT, cm_cmt_cbk_rpc_reg);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "register cmt rpc callback fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_CMT, "register cmt rpc callback fail[%d]", iRet);
         return CM_FAIL;
     }
 }

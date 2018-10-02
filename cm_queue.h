@@ -17,6 +17,7 @@ typedef struct
     uint32 size;
     uint32 rd_index;
     uint32 wr_index;
+	cm_mutex_t lock;
     cm_queue_ele_t elements[CM_QUEUE_CAPACITY];
 } cm_queue_t;
 

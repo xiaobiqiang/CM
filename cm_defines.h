@@ -3,13 +3,12 @@
 
 #include "cm_sys.h"
 
+#define CM_REQUEST_TMOUT 20
 
 #define CM_LOG_DIR "/var/cm/log/"
 
 #define CM_OK 0
 #define CM_FAIL 1
-
-#define CM_LOG_DIR "/var/cm/log/"
 
 #define CM_STRING_32 32
 #define CM_STRING_64 64
@@ -52,6 +51,6 @@ typedef pthread_t cm_thread_t;
 #define CM_MALLOC(len) malloc(len)
 #define CM_FREE(p)	free(p)
 
-
+#define CM_ERR_RPC_CBK_EXEC 0x2
 #endif /* INCLUDE_CM_DEFINES_H */
 

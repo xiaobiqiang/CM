@@ -48,13 +48,13 @@ sint32 cm_exec_for_str_tmout
     iRet = pipe(fds);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_COMM, "pipe fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_COMM, "pipe fail[%d]", iRet);
         return CM_FAIL;
     }
 
     if((pid = fork()) < 0)
     {
-        CM_LOG_ERR(CM_LOG_MOD_COMM, "fork error[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_COMM, "fork error[%d]", iRet);
         return CM_FAIL;
     }
     else if(pid > 0)
@@ -80,7 +80,7 @@ sint32 cm_exec_for_str_tmout
     iRet = execl("/bin/sh", "sh", "-c", cmd, (char *)0);
     if(iRet == CM_FAIL)
     {
-        CM_LOG_ERR(CM_LOG_MOD_COMM, "%s exec fail[%d]", cmd, iRet);
+        CM_LOG_ERR(CM_MOD_COMM, "%s exec fail[%d]", cmd, iRet);
         close(fds[1]);
         _exit(CM_FAIL);
     }

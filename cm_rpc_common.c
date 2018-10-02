@@ -2,47 +2,27 @@
 #include "cm_sys.h"
 #include "cm_log.h"
 
-sint32 cm_rpc_server_bind_retry
-(sint32 fd, const struct sockaddr *addr, uint32 len, uint32 tmout)
+sint32 cm_rpc_send_rpc_tmout(uint32 fd, void *data, uint32 len, uint32 tmout)
 {
     sint32 iRet;
-
-    for(int numsec = 1; numsec <= tmout; numsec << 1)
-    {
-        iRet = bind(fd, addr, len);
-        if(CM_OK == iRet)
-        {
-            return CM_OK;
-        }
-        if(numsec <= tmout / 2)
-        {
-            sleep(numsec);
-        }
-    }
-    return CM_FAIL;
-}
-
-sint32 cm_rpc_send_retry(uint32 fd, void *data, uint32 len, uint32 tmout)
-{
-    sint32 iRet;
-    for(int numsec = 1; numsec <= 1; numsec << 1)
-    {
-        iRet = send(fd, data, len, 0);
-        printf("snd_iRet:%d\n", iRet);
-        if(len == iRet)
-        {
-            return CM_OK;
-        }
-        if(iRet > 0)
-        {
-            return CM_FAIL;
-        }
-        if(numsec <= tmout / 2)
-        {
-            sleep(numsec);
-        }
-    }
-    return CM_FAIL;
+	struct timeval timeout = 
+	{
+		.tv_sec = tmout,
+		.tv_usec = 0
+	};
+	iRet = setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+	if (iRet != CM_OK)
+	{
+		CM_LOG_ERR(CM_MOD_RPC, "set send timeout fail[%d]", iRet);
+		return CM_FAIL;
+	}
+	iRet = send(fd, data, len, 0);
+	if (iRet != len)
+	{
+		CM_LOG_ERR(CM_MOD_RPC, "data_len: %u, send_len: %d", len, iRet);
+		return CM_FAIL;
+	}
+    return CM_OK;
 }
 
 //result默认为CM_OK
@@ -53,7 +33,7 @@ sint32 cm_rpc_new_rpc_msg
     cm_rpc_msg_info_t *pinfo = CM_MALLOC(sizeof(cm_rpc_msg_info_t) + len);
     if(NULL == pinfo)
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "malloc fail");
+        CM_LOG_ERR(CM_MOD_RPC, "malloc fail");
         return CM_FAIL;
     }
     pinfo->tcp_fd = fd;
@@ -67,7 +47,7 @@ sint32 cm_rpc_new_rpc_msg
 }
 
 //发送数据段是rpc_data的cm_rpc_msg_info_t到套接字fd。
-sint32 cm_rpc_client_send_retry
+sint32 cm_rpc_send_tmout
 (sint32 fd, uint32 type, void *rpc_data, uint32 len, uint32 tmout)
 {
     sint32 iRet;
@@ -77,13 +57,13 @@ sint32 cm_rpc_client_send_retry
     iRet = cm_rpc_new_rpc_msg(fd, type, len, rpc_data, &pSnd);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "create new rpc msg fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_RPC, "create new rpc msg fail[%d]", iRet);
         return CM_FAIL;
     }
-    iRet = cm_rpc_send_retry(fd, pSnd, pSnd->headlen + pSnd->datalen, tmout);
+    iRet = cm_rpc_send_rpc_tmout(fd, pSnd, pSnd->headlen + pSnd->datalen, tmout);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "send less data");
+        CM_LOG_ERR(CM_MOD_RPC, "send less data");
         CM_FREE(pSnd);
         return CM_FAIL;
     }
@@ -92,28 +72,32 @@ sint32 cm_rpc_client_send_retry
 }
 
 //接收socket为fd的客户端发送过来的消息，并把数据拷贝到*ppAck的地址上。
-sint32 cm_rpc_recv_try(sint32 fd, void **ppAck, uint32 *pAckLen)
+//不再变动
+sint32 cm_rpc_recv_tmout(sint32 fd, uint32 tmout, void **ppAck, uint32 *pAckLen)
 {
+	sint32 iRet;
     sint32 recv_len = 0;
     uint32 ackLen = 0;
     void *pAckData = NULL;
     cm_rpc_msg_info_t *pRecv = NULL;
+	struct timeval timeout =
+	{
+		.tv_sec = tmout,
+		.tv_usec = 0
+	};
 
-    pRecv = CM_MALLOC(CM_RPC_SERVER_MAX_LEN_MSG);
+    pRecv = CM_MALLOC(CM_RPC_MAX_LEN_MSG);
     if(NULL == pRecv)
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "malloc fail");
-        *ppAck = NULL;
-        *pAckLen = 0;
+        CM_LOG_ERR(CM_MOD_RPC, "malloc fail");
         return CM_FAIL;
     }
-    recv_len = recv(fd, pRecv, CM_RPC_SERVER_MAX_LEN_MSG, 0);
-    CM_LOG_DEBUG(CM_LOG_MOD_RPC, "recv_len:%d\n", recv_len);
-    if(recv_len <= sizeof(cm_rpc_msg_info_t))	//no data.
+	iRet = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    recv_len = recv(fd, pRecv, CM_RPC_MAX_LEN_MSG, 0);
+    CM_LOG_DEBUG(CM_MOD_RPC, "recv_len:%d", recv_len);
+    if(recv_len < sizeof(cm_rpc_msg_info_t))	//no data.
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "recv len:%d", recv_len);
-        *ppAck = NULL;
-        *pAckLen = 0;
+        CM_LOG_ERR(CM_MOD_RPC, "recv_len:%d", recv_len);
         CM_FREE(pRecv);
         return CM_FAIL;
     }
@@ -121,9 +105,7 @@ sint32 cm_rpc_recv_try(sint32 fd, void **ppAck, uint32 *pAckLen)
     pAckData = CM_MALLOC(recv_len);
     if(NULL == pAckData)
     {
-        CM_LOG_ERR(CM_LOG_MOD_RPC, "malloc fail");
-        *ppAck = NULL;
-        *pAckLen = 0;
+        CM_LOG_ERR(CM_MOD_RPC, "malloc fail");
         CM_FREE(pRecv);
         return CM_FAIL;
     }

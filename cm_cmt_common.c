@@ -27,7 +27,7 @@ sint32 cm_cmt_new_cmt_msg
     pinfo = CM_MALLOC(sizeof(cm_cmt_msg_info_t) + len);
     if(NULL == pinfo)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "malloc fail");
+        CM_LOG_ERR(CM_MOD_CMT, "malloc fail");
         return CM_FAIL;
     }
 
@@ -58,7 +58,7 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
 
     if(type >= CM_CMT_MSG_TYPE_BUTT)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "not supported msg type[%u]", type);
+        CM_LOG_ERR(CM_MOD_CMT, "not supported msg type[%u]", type);
         return CM_FAIL;
     }
 
@@ -69,7 +69,7 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
         iRet = pCfg->cbk(pData, len, ppAck, pAckLen);
         if(CM_OK != iRet)
         {
-            CM_LOG_ERR(CM_LOG_MOD_CMT, "cbk exec fail[%d]", iRet);
+            CM_LOG_ERR(CM_MOD_CMT, "cbk exec fail[%d]", iRet);
             return iRet;
         }
         return CM_OK;
@@ -78,7 +78,7 @@ sint32 cm_cmt_request(uint32 nid, uint32 type,
     iRet = cm_cmt_new_cmt_msg(type, nid, pData, len, &pinfo);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "get new cmt msg fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_CMT, "get new cmt msg fail[%d]", iRet);
         return CM_FAIL;
     }
 
@@ -111,19 +111,19 @@ static sint32 cm_cmt_request_comm
     uint32 rpcAcklen = 0;
     cm_cmt_msg_info_t *pRpcAck = NULL;
 
-    iRet = cm_rpc_request(CM_RPC_MSG_TYPE_CMT, ipaddr,
+    iRet = cm_rpc_request(CM_RPC_MSG_CMT, ipaddr,
                           pinfo, pinfo->headlen + pinfo->datalen,
                           &pRpcAck, &rpcAcklen);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "rpc request %s fail[%d]", ipaddr, iRet);
+        CM_LOG_ERR(CM_MOD_CMT, "rpc request %s fail[%d]", ipaddr, iRet);
         return CM_FAIL;
     }
 
     pAck = CM_MALLOC(pRpcAck->datalen);
     if(NULL == pAck)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "malloc fail");
+        CM_LOG_ERR(CM_MOD_CMT, "malloc fail");
         CM_CMT_FREE_RPC_MSG(pRpcAck);
         return CM_FAIL;
     }
@@ -145,7 +145,7 @@ static sint32 cm_cmt_request_nid
     iRet = cm_node_getinfo_by_nid(nid, &nodeinfo);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "subdomainId:%u, ano_subdomainId:%u",
+        CM_LOG_ERR(CM_MOD_CMT, "subdomainId:%u, ano_subdomainId:%u",
                    cm_node_get_subdomain_id(), cm_node_get_subdomain_by_nid(nid));
         return CM_FAIL;
     }
@@ -164,7 +164,7 @@ static sint32 cm_cmt_request_ano_submaster
     iRet = cm_node_get_submaster_info_by_subdomainId(subdomain, &nodeinfo);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "get ano_submaster info fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_CMT, "get ano_submaster info fail[%d]", iRet);
         return CM_FAIL;
     }
 
@@ -181,7 +181,7 @@ static sint32 cm_cmt_request_submaster
     iRet = cm_node_get_submaster_info(&nodeinfo);
     if(CM_OK != iRet)
     {
-        CM_LOG_ERR(CM_LOG_MOD_CMT, "get submaster info fail[%d]", iRet);
+        CM_LOG_ERR(CM_MOD_CMT, "get submaster info fail[%d]", iRet);
         return CM_FAIL;
     }
 
